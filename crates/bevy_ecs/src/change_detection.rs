@@ -488,6 +488,35 @@ pub struct Res<'w, T: ?Sized + Resource> {
 }
 
 impl<'w, T: Resource> Res<'w, T> {
+    /// Create a new `Res` using provided values.
+    ///
+    /// This is an advanced feature, `Res`s are designed to be _created_ by
+    /// engine-internal code and _consumed_ by end-user code.
+    ///
+    /// - `resource` - The resource wrapped by `Res`.
+    /// - `added` - A [`Tick`] that stores the tick when the wrapped resource was created.
+    /// - `changed` - A [`Tick`] that stores the last time the wrapped resource was changed.
+    /// - `last_run` - A [`Tick`], occurring before `this_run`, which is used
+    ///    as a reference to determine whether the wrapped resource is newly added or changed.
+    /// - `this_run` - A [`Tick`] corresponding to the current point in time -- "now".
+    pub fn new(
+        resource: &'w T,
+        added: &'w Tick,
+        changed: &'w Tick,
+        last_run: Tick,
+        this_run: Tick,
+    ) -> Self {
+        Self {
+            value: resource,
+            ticks: Ticks {
+                added,
+                changed,
+                last_run,
+                this_run,
+            },
+        }
+    }
+
     /// Copies a reference to a resource.
     ///
     /// Note that unless you actually need an instance of `Res<T>`, you should
@@ -545,6 +574,37 @@ impl_debug!(Res<'w, T>, Resource);
 pub struct ResMut<'w, T: ?Sized + Resource> {
     pub(crate) value: &'w mut T,
     pub(crate) ticks: TicksMut<'w>,
+}
+
+impl<'w, T: Resource> ResMut<'w, T> {
+    /// Create a new `ResMut` using provided values.
+    ///
+    /// This is an advanced feature, `ResMut`s are designed to be _created_ by
+    /// engine-internal code and _consumed_ by end-user code.
+    ///
+    /// - `resource` - The resource wrapped by `ResMut`.
+    /// - `added` - A [`Tick`] that stores the tick when the wrapped resource was created.
+    /// - `changed` - A [`Tick`] that stores the last time the wrapped resource was changed.
+    /// - `last_run` - A [`Tick`], occurring before `this_run`, which is used
+    ///    as a reference to determine whether the wrapped resource is newly added or changed.
+    /// - `this_run` - A [`Tick`] corresponding to the current point in time -- "now".
+    pub fn new(
+        resource: &'w mut T,
+        added: &'w mut Tick,
+        changed: &'w mut Tick,
+        last_run: Tick,
+        this_run: Tick,
+    ) -> Self {
+        Self {
+            value: resource,
+            ticks: TicksMut {
+                added,
+                changed,
+                last_run,
+                this_run,
+            },
+        }
+    }
 }
 
 impl<'w, 'a, T: Resource> IntoIterator for &'a ResMut<'w, T>
